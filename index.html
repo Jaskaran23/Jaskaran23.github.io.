@@ -1,0 +1,1794 @@
+
+
+<!DOCTYPE html>
+
+<meta charset="utf-8">
+<style>
+
+.axis .domain {
+  display: none;
+}
+
+
+#map-container {
+                height: 550px;
+                width: 1200px;
+                margin-left: 10px;
+                margin-right:: 10px;
+                
+            }
+            /*div {
+                display: inline-block;
+            }*/
+            #map-legend {
+                position: absolute;
+            }
+#box
+{
+	height:550px;
+	width:80px;
+	margin-left: 13px;
+}
+
+#box1
+{
+	height:500px;
+	width:960px;
+	margin-left: 13px;
+}
+
+
+
+
+#area1
+{
+  margin-left: 60px;
+}
+
+#graph1 {
+  display: flex;
+  /* removed width:200px from inline-style*/
+}
+
+.divLeft {
+    display:inline;
+}
+.divRight {
+    display:inline;
+}
+</style>
+<!-- <div id="graph"> </div> -->
+<!-- <svg width="960" height="400"></svg>  -->
+ 
+  
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+<link rel="stylesheet" href=
+ "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+<script src="https://d19vzq90twjlae.cloudfront.net/leaflet-0.7.3/leaflet.js"></script>
+<link rel="stylesheet" href="https://d19vzq90twjlae.cloudfront.net/leaflet-0.7.3/leaflet.css" />
+<script src="http://code.jquery.com/jquery.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+
+<script src="https://d3js.org/d3-timer.v1.min.js"></script>
+
+<body>
+
+
+	
+		<h2 align="Center">Surrey Crime Analytics Dashboard</h2>
+
+    <!-- Control the column width, and how they should appear on different devices -->
+    	<!-- <div id="graph" style="left: 0px;"> </div> -->
+      		<!-- <div class="col-sm-12" style="background-color:yellow;" > -->
+
+     <!-- <svg width="650" height="470" id ="graph" style="left: 0px;"></svg> 			  -->
+     
+<!-- <div id = "svg"></div>
+ --><!-- </div> -->
+      	<!-- <div class="col-sm-8" style="background-color:orange;" > -->
+  <div class ="divRight"> 			
+<svg width="840" height="470" style="right: 0px;"></svg>
+
+
+      			<script>
+
+	var svg = d3.select("svg"),
+	    margin = {top: 60, right: 5, bottom: 30, left:40},
+	    width = +svg.attr("width") - margin.left - margin.right,
+	    height = +svg.attr("height") - margin.top - margin.bottom,
+	    g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+	// The scale spacing the groups:
+	var x0 = d3.scaleBand()
+	    .rangeRound([0, width])
+	    .paddingInner(0.1);
+	  
+	// The scale for spacing each group's bar:
+	var x1 = d3.scaleBand()
+	    .padding(0.05);
+
+	var y = d3.scaleLinear()
+	    .rangeRound([height, 0]);
+
+	// var z = d3.scaleOrdinal()
+	//     .range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
+
+	var z = d3.scaleOrdinal().range(d3.schemeTableau10);
+	var z1 = d3.scaleOrdinal().range(d3.schemeTableau10);
+	</script>
+      	
+      <!-- </div> -->
+    </div>
+
+
+<div class = "divLeft" id = "graph">
+      			  <script >
+
+	var margin1 = {top: 60, right: 0, bottom: 30, left: 160},
+	  width1 = 550 - margin1.left - margin1.right,
+	  height1 = 470 - margin1.top - margin1.bottom;
+
+	// Parse the month variable
+	var parseMonth = d3.timeParse("%b");
+	var formatMonth = d3.timeFormat("%b");
+
+	// Set the ranges
+	 var x2 = d3.scaleLinear().range([ 0, width1]);
+	 var y2 = d3.scaleBand().rangeRound([0, height1]).padding(.09);
+
+
+	// Create the svg canvas in the "graph" div
+	var svg1 = d3.select("#graph")
+	        .append("svg")
+	        .style("width", width1 + margin1.left + margin1.right + "px")
+	        .style("height", height1 + margin1.top + margin1.bottom + "px")
+	        .style('left', '0' + "px")
+	        .attr("width", width1 + margin1.left + margin1.right)
+	        .attr("height", height1 + margin1.top + margin1.bottom)
+	        .append("g")
+	        .attr("transform","translate(" + margin1.left + "," + margin1.top + ")")
+	        .attr("class", "svg");
+
+</script>
+</div>
+
+
+
+
+    <br>
+
+		<div class="container-fluid">
+    <div class="row">
+
+    	<div class="col-sm-2" style="background-color:#F28E2B;"  id = "box"></div>
+    	<!-- <div >This is a rectangle!</div> -->
+
+
+      <div class="col-sm-8" style="background-color:yellow;" id = "map-container">
+      	
+      	<script>
+
+             var map       = L.map("map-container"),
+                    bwOsmURL  = "https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiamFza2FyYW5rYXVyYyIsImEiOiJjazhsOWQxMWcwNXF2M2Zwc3VraDhucHp2In0.TdrwMZrp53_MyTiSnIUe0Q",
+                    osmAttrs  = "Map data © <a href='http://openstreetmap.org'>OpenStreetMap</a>";
+
+                var osmTiles = new L.TileLayer(bwOsmURL, {
+                    minZoom: 8,
+                    maxZoom: 18,
+                    attribution: osmAttrs
+                });
+
+                // Center view on ~NYC
+                var nycCoord  = new L.LatLng(49.19, -122.84);
+
+                map.setView(nycCoord, 12); // latlng, zoom level
+                map.addLayer(osmTiles);
+           
+
+           </script>
+         
+
+      </div>
+        <div class="col-sm-2" style="background-color:#F28E2B;"  id = "box"></div>
+
+  </div>
+
+  <br>
+
+
+
+
+
+
+<script>
+    
+
+d3.csv("data/chart2.csv", function(d, i, columns) {
+  for (var i = 1, n = columns.length; i < n; ++i) d[columns[i]] = +d[columns[i]];
+  return d;
+}, function(error, data) {
+  if (error) throw error;
+
+  
+
+  data.forEach(function(d) {
+      d.Month = parseMonth(d.Month);
+      d['Break and Enter - Residence'] = +d['Break and Enter - Residence'];
+      d['Theft from Motor Vehicle'] = +d['Theft from Motor Vehicle'];
+      d['Break and Enter - Business'] = +d['Break and Enter - Business'];
+      d['Graffiti'] = +d['Graffiti'];
+      d['Fatal/Injury Collision'] = +d['Fatal/Injury Collision'];
+      d['Shoplifting'] = +d['Shoplifting'];
+      d['Theft of Motor Vehicle'] = +d['Theft of Motor Vehicle'];
+  });
+
+var nest = [];//create empty array
+var keys = Object.keys(data[0]); //get the headers for your data
+//for each header push the sum as an object
+keys.forEach(function (d, i) {
+  if (i == 0) return;//ignore first column as that is month
+  //get the sumfrom your data for all the values of this key i.e. d
+  var sum = d3.sum (data, function(e){ return e[d] }); 
+  //create an object with this key value pair
+  var obj = {
+    key: d, //column name
+    value: sum //sum for the column
+  }
+  nest.push(obj); //push this as an object in the nest array
+})
+
+// console.log(nest)
+  // Scale the range of the data
+  y2.domain(nest.map(function(d) { if (d.key != "Month") return d.key; }));
+  x2.domain([0, d3.max(nest, function(d) { return d.value; })]);
+
+
+  // Set up the x axis
+  svg1.append("g")
+    .attr("transform", "translate(0," + height1 + ")")
+    .call(d3.axisBottom(x2))
+    .selectAll("text")
+      .attr("transform", "translate(-10,0)rotate(-30)")
+      .style("text-anchor", "end");
+
+  // Add the Y Axis
+   var yaxis1 = svg1.append("g")
+       .attr("class", "y axis")
+       .call(d3.axisLeft(y2)
+          .ticks(5)
+          .tickSizeInner(0)
+          .tickPadding(6)
+          .tickSize(0, 0));
+
+
+    // var myColor = d3.scaleOrdinal().range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"];
+
+    var myColor = d3.scaleOrdinal().range(d3.schemeTableau10);
+    // console.log(function(d) { return (d.key);})
+
+ // yaxis.select(".domain").style("display","none")
+
+  // Add a label to the y axis
+  svg1.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0 - 60)
+        .attr("x", 0 - (height1 / 2))
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        // .text("Total Count of Crime")
+        .attr("class", "y axis label");
+// var selection = [];
+  // Draw the bars
+  svg1.selectAll(".rect")
+      .data(nest)
+      .enter()
+      .append("rect")
+          .attr("class", "bar")
+          .attr("x", x2(0) )
+          .attr("y", function(d) { return y2(d.key); })
+          .attr("width", function(d) { return x2(d.value); })
+          .attr("height", y2.bandwidth() )
+          .attr("fill", function(d){return myColor(d.key) })
+           .on("click",function(d) { 
+            update(d.key);
+            
+            update3(d.key);
+
+             })
+
+           ;
+           
+        
+   
+
+
+  var keys1 = data.columns.slice(1);
+
+   var j = 'Jan' ;
+  var k = null;
+  x0.domain(data.map(function(d) { return d.State; }));
+  x1.domain(keys1).rangeRound([0, x0.bandwidth()]);
+  y.domain([0, d3.max(data, function(d) { return d3.max(keys1, function(key) { return d[key]; }); })]).nice();
+  
+ g.append("g")
+    .selectAll("g")
+    .style('right', '0' + "px")
+    .data([{'j': ''}])
+    .data(data)
+    .enter().append("g")
+    .attr("class","bar")
+    .on("click",function(d) { (j = d.State) ;})
+    
+    .attr("transform", function(d) { return "translate(" + x0(d.State) + ",0)"; })
+    .selectAll("rect")
+    .data(function(d) { return keys1.map(function(key) { return {key: key, value: d[key]}; }); })
+    .enter().append("rect")
+      .attr("x", function(d) { return x1(d.key); })
+      .attr("y", function(d) { return y(d.value); })
+      .attr("width", x1.bandwidth())
+      .attr("height", function(d) { return height - y(d.value); })
+      .attr("fill", function(d) { return z(d.key); })
+      .on("click",(function(d) {update5(j,d.key) ;}));
+     
+      
+      
+
+  g.append("g")
+      .attr("class", "axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x0));
+
+  g.append("g")
+      .attr("class", "y axis")
+      .call(d3.axisLeft(y).ticks(null, "s"))
+      .append("text")
+      .attr("x", 2)
+      .attr("y", y(y.ticks().pop()) + 0.5)
+      .attr("dy", "0.32em")
+      .attr("fill", "#000")
+      .attr("font-weight", "bold")
+      .attr("text-anchor", "start")
+      .text("Count by Month");
+
+
+
+function store_val1(val1)
+     {
+         j=val1;   
+
+       }
+
+ function store_val2(val2)
+
+       {
+
+        k=val2;
+       }
+
+
+
+
+  
+  var filtered = [];
+  var filtered1 = [];
+  
+  ////
+  //// Update and transition on click:
+  ////
+  
+   function update(d) 
+  {  
+   
+    //
+    // Update the array to filter the chart by:
+    //
+   
+    // add the clicked key if not included:
+    if (filtered.indexOf(d) == -1) {
+     filtered.push(d); 
+      // if all bars are un-checked, reset:
+      if(filtered.length == keys1.length) filtered = [];
+    }
+    // otherwise remove it:
+    else {
+      filtered.splice(filtered.indexOf(d), 1);
+    }
+    
+    //
+    // Update the scales for each group(/states)'s items:
+    //
+    var newKeys = [];
+    keys1.forEach(function(d) {
+      if (filtered.indexOf(d) == -1 ) {
+        newKeys.push(d);
+        
+      }
+    })
+    x1.domain(newKeys).rangeRound([0, x0.bandwidth()]);
+    y.domain([0, d3.max(data, function(d) { return d3.max(keys1, function(key) { if (filtered.indexOf(key) == -1) return d[key]; }); })]).nice();
+    
+    // update the y axis:
+            svg.select(".y")
+            .transition()
+            .call(d3.axisLeft(y).ticks(null, "s"))
+            .duration(500);
+    
+    
+    //
+    // Filter out the bands that need to be hidden:
+    //
+    var bars = svg.selectAll(".bar").selectAll("rect")
+      .data(function(d) { return keys1.map(function(key) { return {key: key, value: d[key]}; }); })
+
+    
+   bars.filter(function(d) {
+         return filtered.indexOf(d.key) > -1;
+      })
+      .transition()
+      .attr("x", function(d) {
+        return (+d3.select(this).attr("x")) + (+d3.select(this).attr("width"))/2;  
+      })
+      .attr("height",0)
+      .attr("width",0)     
+      .attr("y", function(d) { return height; })
+      .duration(500);
+      
+    //
+    // Adjust the remaining bars:
+    //
+    bars.filter(function(d) {
+        return filtered.indexOf(d.key) == -1;
+      })
+      .transition()
+      .attr("x", function(d) { return x1(d.key); })
+      .attr("y", function(d) { return y(d.value); })
+      .attr("height", function(d) { return height - y(d.value); })
+      .attr("width", x1.bandwidth())
+      .attr("fill", function(d) { return z(d.key); })
+      .duration(500);
+    
+  
+    // update legend:
+    // legend.selectAll("rect")
+    //   .transition()
+    //   .attr("fill",function(d) {
+    //     if (filtered.length) {
+    //       if (filtered.indexOf(d) == -1) {
+    //         return z(d); 
+    //       }
+    //        else {
+    //         return "white"; 
+    //       }
+    //     }
+    //     else {
+    //      return z(d); 
+    //     }
+    //   })
+    //   .duration(100);
+    
+     
+  }
+
+
+
+
+  // accessible in d3.csv() and makeCrimeMap()
+
+            // Load some data and add it to the map!
+            
+                // L = Leaflet name space, pass it the id of our container
+                // Define URL for fetching map tiles, and cite source
+               
+
+function update3(d) {
+
+
+var colorScale;
+  if (filtered1.indexOf(d) == -1) {
+     filtered1.push(d); 
+      // if all bars are un-checked, reset:
+      if(filtered1.length == keys1.length) filtered = [];
+    }
+    // otherwise remove it:
+    else {
+      filtered1.splice(filtered1.indexOf(d), 1);
+    }
+    
+    //
+    // Update the scales for each group(/states)'s items:
+    //
+    var newKeys1 = [];
+    keys1.forEach(function(d) {
+      if (filtered1.indexOf(d) == -1 ) {
+        newKeys1.push(d);
+        // console.log(newKeys1);
+      }
+    })
+
+ 
+          
+              colorScale = d3.scaleOrdinal().range(d3.schemeTableau10);
+             // accessible in d3.csv() and makeCrimeMap()
+
+            // Load some data and add it to the map!
+            d3.csv('data/lat_long_surrey.csv', function(error, data) {
+
+              // data.filter(function(d,i){ return tokeep.indexOf(d.name) >= 0 })
+                // var crimeData = data.filter(function(d){ if (d['INCIDENT_TYPE'] == selectedVar) {return d;}})
+
+                 // var crimeData = data.filter(function(d,i){ return newKeys1.indexOf(d.INCIDENT_TYPE) > -1})
+                 var crimeData = data.filter(function(d,i){ return newKeys1.indexOf(d.INCIDENT_TYPE) > -1})
+
+
+                // var data1 = data.filter(function(d){ if (d['State'] == selectedVar1) {return d;}})
+
+                  // colorScale  = d3.scale.category10();
+
+                 var radiusScale = d3.scaleLinear()
+                     .domain([0, 5])
+                      .range([1, 10]);
+
+                   
+
+                var geoJSONCrimeFeatures = [];
+
+
+                crimeData.forEach(function(crime, i) {
+                    var info = "<span style='color:" +  z(crime.INCIDENT_TYPE) + "'><b>" +
+                                 crime.INCIDENT_TYPE.toLowerCase() + "</b></span><br/>" +
+                                   "count: <b>" + 2 + "</b>, " +
+                                 "date: <b>" + crime.MONTH + "/" + crime.YEAR + "</b>"
+
+                    var geoJSONFeature = {
+                        "type": "Feature",
+                        "properties": { // used to style marker below
+                            "color":  z(crime.INCIDENT_TYPE) ,
+
+                            "radius": radiusScale(+2),
+                            "info":   info
+                        },
+
+                         // .attr("fill", function(d) { return z(d.key); })
+                         // "color":  colorScale(crime.INCIDENT_TYPE),
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [ +crime.Longitude, +crime.Latitude ] // note long lat!
+                        }
+                    };
+                    geoJSONCrimeFeatures.push(geoJSONFeature);
+                });
+
+                makeCrimeMap(geoJSONCrimeFeatures);
+            });
+  // var map = L.map('map').setView([49.19, -122.84], 13);
+
+
+
+            var makeCrimeMap = function(geoJSONCrimeFeatures) {
+                // L = Leaflet name space, pass it the id of our container
+                // Define URL for fetching map tiles, and cite source
+               
+                map.eachLayer(function(layer) {
+                    if( layer instanceof L.GeoJSON )
+                        map.removeLayer(layer);
+                    });
+
+                  var layer =  L.geoJson(geoJSONCrimeFeatures, {
+                    style: function (feature) {
+                        return {
+                            color:       '#000',
+                            opacity:     0,
+                            radius:      feature.properties.radius,
+                            fillColor:   feature.properties.color,
+                            fillOpacity: 0.7
+                        };
+                    },
+
+                    // feature.properties.color
+
+                   
+                    onEachFeature: function (feature, layer) {
+                        layer.bindPopup(feature.properties.info);
+                    },
+                    pointToLayer: function (feature, latlng) {
+                        return L.circleMarker(latlng);
+                    }
+
+                })
+               layer.addTo(map);
+
+
+                // Add legend with d3
+               
+            };
+
+            }
+  
+   
+
+              
+update3('','Theft from Motor Vehicle','Break and Enter - Business','Graffiti','Fatal/Injury Collision','Shoplifting','Theft of Motor Vehicle') 
+
+
+
+function update5(selectedVar,selectedVar1) {
+
+  console.log(selectedVar,selectedVar1)
+          
+                var colorScale;
+             // accessible in d3.csv() and makeCrimeMap()
+
+            // Load some data and add it to the map!
+            d3.csv('data/lat_long_surrey.csv', function(error, data) {
+                var crimeData1 = data.filter(function(d){ if (d['INCIDENT_TYPE'] == selectedVar1) {return d;}})
+                var crimeData = crimeData1.filter(function(d){ if (d['MONTH'] == selectedVar) {return d;}})
+
+                // var data1 = data.filter(function(d){ if (d['State'] == selectedVar1) {return d;}})
+
+                 // colorScale  = d3.scale.category10();
+                 colorScale = d3.scaleOrdinal().range(d3.schemeTableau10);
+
+                 var radiusScale = d3.scaleLinear()
+                     .domain([0, 5])
+                      .range([1, 10]);
+
+                var geoJSONCrimeFeatures = [];
+
+
+                crimeData.forEach(function(crime, i) {
+                    var info = "<span style='color:" + z(crime.INCIDENT_TYPE) + "'><b>" +
+                                 crime.INCIDENT_TYPE.toLowerCase() + "</b></span><br/>" +
+                                   "count: <b>" + 2 + "</b>, " +
+                                 "date: <b>" + crime.MONTH + "/" + crime.YEAR + "</b>"
+
+                    var geoJSONFeature = {
+                        "type": "Feature",
+                        "properties": { // used to style marker below
+                            "color":  z(crime.INCIDENT_TYPE),
+                            "radius": radiusScale(+2),
+                            "info":   info
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [ +crime.Longitude, +crime.Latitude ] // note long lat!
+                        }
+                    };
+                    geoJSONCrimeFeatures.push(geoJSONFeature);
+                });
+
+                makeCrimeMap(geoJSONCrimeFeatures);
+            });
+
+
+
+  // var map = L.map('map').setView([49.19, -122.84], 13);
+
+
+
+            var makeCrimeMap = function(geoJSONCrimeFeatures) {
+                // L = Leaflet name space, pass it the id of our container
+                // Define URL for fetching map tiles, and cite source
+               
+                map.eachLayer(function(layer) {
+                    if( layer instanceof L.GeoJSON )
+                        map.removeLayer(layer);
+                    });
+
+                  var layer =  L.geoJson(geoJSONCrimeFeatures, {
+                    style: function (feature) {
+                        return {
+                            color:       '#000',
+                            opacity:     0,
+                            radius:      feature.properties.radius,
+                            fillColor:   feature.properties.color,
+                            fillOpacity: 0.7
+                        };
+                    },
+
+                   
+                    onEachFeature: function (feature, layer) {
+                        layer.bindPopup(feature.properties.info);
+                    },
+                    pointToLayer: function (feature, latlng) {
+                        return L.circleMarker(latlng);
+                    }
+
+                })
+               layer.addTo(map);
+
+
+                // Add legend with d3
+               
+            };
+
+            }
+
+            
+  });
+
+</script>
+
+</div>
+
+<div id = "box1">
+	<h4> Explore Crime By Neighbourhood</h4>
+	<script>
+
+
+var svg7 = d3.select("#box1").append("svg").attr("width", 1360).attr("height", 450);
+var margin7 = {top: 20, right: 20, bottom: 30, left: 80};
+var width7 = +svg7.attr("width") - margin7.left - margin7.right;
+var height7 =+svg7.attr("height") - margin7.top - margin7.bottom;
+var x07 = d3.scaleBand().rangeRound([0, width7]).paddingInner(0.1);
+  
+
+var x17 = d3.scaleBand().padding(0.05);
+
+var y7 = d3.scaleLinear().rangeRound([height7, 0]);
+
+var z7 = d3.scaleOrdinal().range(d3.schemeTableau10);
+chart5();
+
+function chart5() {
+// var svg7 = d3.select("svg"),
+//    margin7 = {top: 20, right: 20, bottom: 30, left: 40},
+//     width7 = 960 - margin7.left - margin7.right,
+//     height7 =500 - margin7.top - margin7.bottom;
+
+// // The scale spacing the groups:
+// var x07 = d3.scaleBand().rangeRound([0, width7]).paddingInner(0.1);
+  
+// // The scale for spacing each group's bar:
+// var x17 = d3.scaleBand().padding(0.05);
+
+// var y7 = d3.scaleLinear().rangeRound([height7, 0]);
+
+// var z7 = d3.scaleOrdinal().range(d3.schemeTableau10);
+
+  
+var g7 = svg7.append("g").attr('id','gbar').attr("transform", "translate(" + margin7.left + "," + margin7.top + ")");
+
+
+d3.csv("data/neighbour_crime.csv", function(d, i, columns) {
+  for (var i = 1, n = columns.length; i < n; ++i) d[columns[i]] = +d[columns[i]];
+  return d;
+}, function(error, data) {
+  if (error) throw error;
+
+  var keys7 = data.columns.slice(1);
+
+  x07.domain(data.map(function(d) { return d.State; }));
+  x17.domain(keys7).rangeRound([0, x07.bandwidth()]);
+  y7.domain([0, d3.max(data, function(d) { return d3.max(keys7, function(key) { return d[key]; }); })]).nice();
+  
+ g7.append("g")
+    .selectAll("g")
+    .data(data)
+    .enter().append("g")
+    .attr("class","bar")
+    .attr("transform", function(d) { return "translate(" + x07(d.State) + ",0)"; })
+    .selectAll("rect")
+    .data(function(d) { return keys7.map(function(key) { return {key: key, value: d[key]}; }); })
+    .enter().append("rect")
+      .attr("x", function(d) { return x17(d.key); })
+      .attr("y", function(d) { return y7(d.value); })
+      .attr("width", x17.bandwidth())
+      .attr("height", function(d) { return height7 - y7(d.value); })
+      .attr("fill", function(d) { return z7(d.key); });
+
+  g7.append("g")
+      .attr("class", "axis")
+      .attr("transform", "translate(0," + height7 + ")")
+      .call(d3.axisBottom(x07));
+
+  g7.append("g")
+      .attr("class", "y axis")
+      .call(d3.axisLeft(y7).ticks(null, "s"))
+    .append("text")
+      .attr("x", 2)
+      .attr("y", y7(y7.ticks().pop()) + 0.5)
+      .attr("dy", "0.32em")
+      .attr("fill", "#000")
+      .attr("font-weight", "bold")
+      .attr("text-anchor", "start")
+      .text("Crime by neighbourhood");
+
+  var legend7 = g7.append("g")
+      .attr("font-family", "sans-serif")
+      .attr("font-size", 10)
+      .attr("text-anchor", "end")
+    .selectAll("g")
+    .data(keys7.slice().reverse())
+    .enter().append("g")
+      .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
+
+  legend7.append("rect")
+      .attr("x", width7 - 17)
+      .attr("width", 15)
+      .attr("height", 15)
+      .attr("fill", z7)
+      .attr("stroke", z7)
+      .attr("stroke-width",2)
+      .on("click",function(d) { update7(d) });
+
+  legend7.append("text")
+      .attr("x", width7 - 24)
+      .attr("y", 9.5)
+      .attr("dy", "0.32em")
+      .text(function(d) { return d; });
+  
+  var filtered7 = [];
+  
+  ////
+  //// Update and transition on click:
+  ////
+  
+  function update7(d) {  
+   
+    //
+    // Update the array to filter the chart by:
+    //
+   
+    // add the clicked key if not included:
+    if (filtered7.indexOf(d) == -1) {
+     filtered7.push(d); 
+      // if all bars are un-checked, reset:
+      if(filtered7.length == keys7.length) filtered7 = [];
+    }
+    // otherwise remove it:
+    else {
+      filtered7.splice(filtered7.indexOf(d), 1);
+    }
+    
+    //
+    // Update the scales for each group(/states)'s items:
+    //
+    var newKeys7 = [];
+    keys7.forEach(function(d) {
+      if (filtered7.indexOf(d) == -1 ) {
+        newKeys7.push(d);
+      }
+    })
+    x17.domain(newKeys7).rangeRound([0, x07.bandwidth()]);
+    y7.domain([0, d3.max(data, function(d) { return d3.max(keys7, function(key) { if (filtered7.indexOf(key) == -1) return d[key]; }); })]).nice();
+    
+    // update the y axis:
+            svg7.select(".y")
+            .transition()
+            .call(d3.axisLeft(y7).ticks(null, "s"))
+            .duration(500);
+    
+    
+    //
+    // Filter out the bands that need to be hidden:
+    //
+    var bars7 = svg7.selectAll(".bar").selectAll("rect")
+      .data(function(d) { return keys7.map(function(key) { return {key: key, value: d[key]}; }); })
+    
+   bars7.filter(function(d) {
+         return filtered7.indexOf(d.key) > -1;
+      })
+      .transition()
+      .attr("x", function(d) {
+        return (+d3.select(this).attr("x")) + (+d3.select(this).attr("width"))/2;  
+      })
+      .attr("height",0)
+      .attr("width",0)     
+      .attr("y", function(d) { return height7; })
+      .duration(500);
+      
+    //
+    // Adjust the remaining bars:
+    //
+    bars7.filter(function(d) {
+        return filtered7.indexOf(d.key) == -1;
+      })
+      .transition()
+      .attr("x", function(d) { return x17(d.key); })
+      .attr("y", function(d) { return y7(d.value); })
+      .attr("height", function(d) { return height7 - y7(d.value); })
+      .attr("width", x17.bandwidth())
+      .attr("fill", function(d) { return z7(d.key); })
+      .duration(500);
+    
+  
+    // update legend:
+    legend7.selectAll("rect")
+      .transition()
+      .attr("fill",function(d) {
+        if (filtered7.length) {
+          if (filtered7.indexOf(d) == -1) {
+            return z7(d); 
+          }
+           else {
+            return "white"; 
+          }
+        }
+        else {
+         return z7(d); 
+        }
+      })
+      .duration(100);
+    
+     
+  }
+  
+});
+
+}
+</script>
+
+
+
+    	</div>
+
+
+    	<br>
+
+ <div class="container">
+      <form>
+      	<label class="checkbox-inline">
+      	
+   <input type="checkbox" class="checkbox" value="North Surrey" checked >North Surrey</label>
+
+   <label class="checkbox-inline">
+  <input type="checkbox" class="checkbox" value="Guildford" checked>Guildford</label>
+  <label class="checkbox-inline">
+  <input type="checkbox" class="checkbox" value="South Surrey" checked>South Surrey</label>
+  <label class="checkbox-inline">
+  <input type="checkbox" class="checkbox" value="Newton" checked>Newton</label>
+  <label class="checkbox-inline">
+  <input type="checkbox" class="checkbox" value="Cloverdale" checked>Cloverdale</label>
+  <label class="checkbox-inline">
+  <input type="checkbox" class="checkbox" value="Fleetwood" checked>Fleetwood</label>
+</form>
+</div>
+
+      </div>
+<br>
+
+      <div class="row">
+      <div class="col-sm-6"  id = "box2">
+   		<h4> Explore Neighbourhood Demographics</h4>
+
+<script>
+
+var svg8 = d3.select("#box2").append("svg").attr("width", 660).attr("height", 400);
+var margin8 = {top: 20, right: 20, bottom: 30, left: 120};
+var width8 = +svg8.attr("width") - margin8.left - margin8.right;
+var height8 =+svg8.attr("height") - margin8.top - margin8.bottom;
+var x08 = d3.scaleBand().rangeRound([0, width8]).paddingInner(0.1);
+  
+// The scale for spacing each group's bar:
+var x18 = d3.scaleBand().padding(0.05);
+
+var y8 = d3.scaleLinear().rangeRound([height8, 0]);
+
+var z8 = d3.scaleOrdinal().range(d3.schemeTableau10);
+chart6();
+
+function chart6() {
+
+g8 = svg8.append("g").attr('id','g81').attr("transform", "translate(" + margin8.left + "," + margin8.top + ")");
+
+
+
+d3.csv("data/income_neighbourhood.csv", function(d, i, columns) {
+  for (var i = 1, n = columns.length; i < n; ++i) d[columns[i]] = +d[columns[i]];
+  return d;
+}, function(error, data) {
+  if (error) throw error;
+
+  var keys8 = data.columns.slice(1);
+
+  x08.domain(data.map(function(d) { return d.group; }));
+  x18.domain(keys8).rangeRound([0, x08.bandwidth()]);
+  y8.domain([0, d3.max(data, function(d) { return d3.max(keys8, function(key) { return d[key]; }); })]).nice();
+  
+ g8.append("g")
+    .selectAll("g")
+    .data(data)
+    .enter().append("g")
+    .attr("class","bar")
+    .attr("transform", function(d) { return "translate(" + x08(d.group) + ",0)"; })
+    .selectAll("rect")
+    .data(function(d) { return keys8.map(function(key) { return {key: key, value: d[key]}; }); })
+    .enter().append("rect")
+      .attr("x", function(d) { return x18(d.key); })
+      .attr("y", function(d) { return y8(d.value); })
+      .attr("width", x18.bandwidth())
+      .attr("height", function(d) { return height8 - y8(d.value); })
+      .attr("fill", function(d) { return z8(d.key); });
+
+  g8.append("g")
+      .attr("class", "axis")
+      .attr("transform", "translate(0," + height8 + ")")
+      .call(d3.axisBottom(x08));
+
+  g8.append("g")
+      .attr("class", "y axis")
+      .call(d3.axisLeft(y8).ticks(null, "s"))
+    .append("text")
+      .attr("x", 2)
+      .attr("y", y8(y8.ticks().pop()) + 0.5)
+      .attr("dy", "0.32em")
+      .attr("fill", "#000")
+      .attr("font-weight", "bold")
+      .attr("text-anchor", "start")
+      .text("Income by neighbourhood units:%");
+
+  var legend8 = g8.append("g")
+      .attr("font-family", "sans-serif")
+      .attr("font-size", 10)
+      .attr("text-anchor", "end")
+    .selectAll("g")
+    .data(keys8.slice().reverse())
+    .enter().append("g")
+      .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
+
+  legend8.append("rect")
+      .attr("x", width8 - 17)
+      .attr("width", 15)
+      .attr("height", 15)
+      .attr("fill", z8)
+      .attr("stroke", z8)
+      .attr("stroke-width",2)
+      .on("click",function(d) { update8(d) });
+
+  legend8.append("text")
+      .attr("x", width8 - 24)
+      .attr("y", 9.5)
+      .attr("dy", "0.32em")
+      .text(function(d) { return d; });
+
+  d3.selectAll('.checkbox').on('click', function() {
+  var cb8= d3.select(this);
+  var ids8 = cb8.property("value");
+  update8(ids8);
+});
+
+  
+  var filtered8 = [];
+  
+
+ 
+  
+  function update8(d) {  
+   
+    //
+    // Update the array to filter the chart by:
+    //
+   
+    // add the clicked key if not included:
+    if (filtered8.indexOf(d) == -1) {
+     filtered8.push(d); 
+      // if all bars are un-checked, reset:
+      if(filtered8.length == keys8.length) filtered8 = [];
+    }
+    // otherwise remove it:
+    else {
+      filtered8.splice(filtered8.indexOf(d), 1);
+    }
+    
+    //
+    // Update the scales for each group(/states)'s items:
+    //
+    var newKeys8 = [];
+    keys8.forEach(function(d) {
+      if (filtered8.indexOf(d) == -1 ) {
+        newKeys8.push(d);
+      }
+    })
+    x18.domain(newKeys8).rangeRound([0, x08.bandwidth()]);
+    y8.domain([0, d3.max(data, function(d) { return d3.max(keys8, function(key) { if (filtered8.indexOf(key) == -1) return d[key]; }); })]).nice();
+    
+    // update the y axis:
+            svg8.select(".y")
+            .transition()
+            .call(d3.axisLeft(y8).ticks(null, "s"))
+            .duration(500);
+    
+    
+    //
+    // Filter out the bands that need to be hidden:
+    //
+    var bars8 = svg8.selectAll(".bar").selectAll("rect")
+      .data(function(d) { return keys8.map(function(key) { return {key: key, value: d[key]}; }); })
+    
+   bars8.filter(function(d) {
+         return filtered8.indexOf(d.key) > -1;
+      })
+      .transition()
+      .attr("x", function(d) {
+        return (+d3.select(this).attr("x")) + (+d3.select(this).attr("width"))/2;  
+      })
+      .attr("height",0)
+      .attr("width",0)     
+      .attr("y", function(d) { return height8; })
+      .duration(500);
+      
+    //
+    // Adjust the remaining bars:
+    //
+    bars8.filter(function(d) {
+        return filtered8.indexOf(d.key) == -1;
+      })
+      .transition()
+      .attr("x", function(d) { return x18(d.key); })
+      .attr("y", function(d) { return y8(d.value); })
+      .attr("height", function(d) { return height8 - y8(d.value); })
+      .attr("width", x18.bandwidth())
+      .attr("fill", function(d) { return z8(d.key); })
+      .duration(500);
+    
+  
+    // update legend:
+    legend8.selectAll("rect")
+      .transition()
+      .attr("fill",function(d) {
+        if (filtered8.length) {
+          if (filtered8.indexOf(d) == -1) {
+            return z8(d); 
+          }
+           else {
+            return "white"; 
+          }
+        }
+        else {
+         return z8(d); 
+        }
+      })
+      .duration(100);
+    
+     
+  }
+  
+});
+
+}
+</script>
+
+
+
+
+
+      </div>
+
+
+
+      <div class="col-sm-6"  id ="box3">
+
+      	<script>
+      	
+
+var svg11 = d3.select("#box3").append("svg").attr("width", 560).attr("height",400);
+var margin11 = {top: 20, right: 20, bottom: 30, left: 60};
+var width11 = +svg11.attr("width") - margin11.left - margin11.right;
+var height11 =+svg11.attr("height") - margin11.top - margin11.bottom;
+var x011 = d3.scaleBand().rangeRound([0, width11]).paddingInner(0.1);
+  
+// The scale for spacing each group's bar:
+var x111 = d3.scaleBand().padding(0.05);
+
+var y11 = d3.scaleLinear().rangeRound([height11, 0]);
+
+var z11 = d3.scaleOrdinal().range(d3.schemeTableau10);
+chart7();
+
+function chart7() {
+
+g11 = svg11.append("g").attr('id','g11').attr("transform", "translate(" + margin11.left + "," + margin11.top + ")");
+d3.csv("data/education.csv", function(d, i, columns) {
+  for (var i = 1, n = columns.length; i < n; ++i) d[columns[i]] = +d[columns[i]];
+  return d;
+}, function(error, data) {
+  if (error) throw error;
+
+  var keys11 = data.columns.slice(1);
+
+  x011.domain(data.map(function(d) { return d.group; }));
+  x111.domain(keys11).rangeRound([0, x011.bandwidth()]);
+  y11.domain([0, d3.max(data, function(d) { return d3.max(keys11, function(key) { return d[key]; }); })]).nice();
+  
+ g11.append("g")
+    .selectAll("g")
+    .data(data)
+    .enter().append("g")
+    .attr("class","bar")
+    .attr("transform", function(d) { return "translate(" + x011(d.group) + ",0)"; })
+    .selectAll("rect")
+    .data(function(d) { return keys11.map(function(key) { return {key: key, value: d[key]}; }); })
+    .enter().append("rect")
+      .attr("x", function(d) { return x111(d.key); })
+      .attr("y", function(d) { return y11(d.value); })
+      .attr("width", x111.bandwidth())
+      .attr("height", function(d) { return height11 - y11(d.value); })
+      .attr("fill", function(d) { return z11(d.key); });
+
+  g11.append("g")
+      .attr("class", "axis")
+      .attr("transform", "translate(0," + height11 + ")")
+      .call(d3.axisBottom(x011));
+
+  g11.append("g")
+      .attr("class", "y axis")
+      .call(d3.axisLeft(y11).ticks(null, "s"))
+    .append("text")
+      .attr("x", 2)
+      .attr("y", y11(y11.ticks().pop()) + 0.5)
+      .attr("dy", "0.32em")
+      .attr("fill", "#000")
+      .attr("font-weight", "bold")
+      .attr("text-anchor", "start")
+      .text("Education by neighbourhood  units:%");
+
+  var legend11 = g11.append("g")
+      .attr("font-family", "sans-serif")
+      .attr("font-size", 10)
+      .attr("text-anchor", "end")
+    .selectAll("g")
+    .data(keys11.slice().reverse())
+    .enter().append("g")
+      .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
+
+  legend11.append("rect")
+      .attr("x", width11 - 1)
+      .attr("width", 15)
+      .attr("height", 15)
+      .attr("fill", z11)
+      .attr("stroke", z11)
+      .attr("stroke-width",2)
+      .on("click",function(d) { update11(d) });
+
+  legend11.append("text")
+      .attr("x", width11 - 2)
+      .attr("y", 9.5)
+      .attr("dy", "0.32em")
+      .text(function(d) { return d; });
+
+
+  d3.selectAll('.checkbox').on('click', function() {
+  var cb11= d3.select(this);
+  var ids11 = cb11.property("value");
+  update11(ids11);
+});
+  
+  var filtered11 = [];
+  
+  ////
+  //// Update and transition on click:
+  ////
+  
+  function update11(d) {  
+   
+    //
+    // Update the array to filter the chart by:
+    //
+   
+    // add the clicked key if not included:
+    if (filtered11.indexOf(d) == -1) {
+     filtered11.push(d); 
+      // if all bars are un-checked, reset:
+      if(filtered11.length == keys11.length) filtered11 = [];
+    }
+    // otherwise remove it:
+    else {
+      filtered11.splice(filtered11.indexOf(d), 1);
+    }
+    
+    //
+    // Update the scales for each group(/states)'s items:
+    //
+    var newKeys11 = [];
+    keys11.forEach(function(d) {
+      if (filtered11.indexOf(d) == -1 ) {
+        newKeys11.push(d);
+      }
+    })
+    x111.domain(newKeys11).rangeRound([0, x011.bandwidth()]);
+    y11.domain([0, d3.max(data, function(d) { return d3.max(keys11, function(key) { if (filtered11.indexOf(key) == -1) return d[key]; }); })]).nice();
+    
+    // update the y axis:
+            svg11.select(".y")
+            .transition()
+            .call(d3.axisLeft(y11).ticks(null, "s"))
+            .duration(500);
+    
+    
+    //
+    // Filter out the bands that need to be hidden:
+    //
+    var bars11 = svg11.selectAll(".bar").selectAll("rect")
+      .data(function(d) { return keys11.map(function(key) { return {key: key, value: d[key]}; }); })
+    
+   bars11.filter(function(d) {
+         return filtered11.indexOf(d.key) > -1;
+      })
+      .transition()
+      .attr("x", function(d) {
+        return (+d3.select(this).attr("x")) + (+d3.select(this).attr("width"))/2;  
+      })
+      .attr("height",0)
+      .attr("width",0)     
+      .attr("y", function(d) { return height11; })
+      .duration(500);
+      
+    //
+    // Adjust the remaining bars:
+    //
+    bars11.filter(function(d) {
+        return filtered11.indexOf(d.key) == -1;
+      })
+      .transition()
+      .attr("x", function(d) { return x111(d.key); })
+      .attr("y", function(d) { return y11(d.value); })
+      .attr("height", function(d) { return height11 - y11(d.value); })
+      .attr("width", x111.bandwidth())
+      .attr("fill", function(d) { return z11(d.key); })
+      .duration(500);
+    
+  
+    // update legend:
+    legend11.selectAll("rect")
+      .transition()
+      .attr("fill",function(d) {
+        if (filtered11.length) {
+          if (filtered11.indexOf(d) == -1) {
+            return z11(d); 
+          }
+           else {
+            return "white"; 
+          }
+        }
+        else {
+         return z11(d); 
+        }
+      })
+      .duration(100);
+    
+     
+  }
+  
+});
+}
+</script>
+
+
+      </div>
+
+  </div>
+
+  <div class = "row">
+      <div class="col-sm-6"  id = "box4">
+      	<script>
+
+
+var svg9 = d3.select("#box4").append("svg").attr("width", 660).attr("height", 400);
+var margin9 = {top: 20, right: 20, bottom: 30, left: 120};
+var width9 = +svg9.attr("width") - margin9.left - margin9.right;
+var height9 =+svg9.attr("height") - margin9.top - margin9.bottom;
+var x09 = d3.scaleBand().rangeRound([0, width9]).paddingInner(0.1);
+  
+// The scale for spacing each group's bar:
+var x19 = d3.scaleBand().padding(0.05);
+
+var y9 = d3.scaleLinear().rangeRound([height9, 0]);
+
+var z9 = d3.scaleOrdinal().range(d3.schemeTableau10);
+
+chart8();
+
+function chart8() {
+
+   g9 = svg9.append("g").attr('id','g9').attr("transform", "translate(" + margin9.left + "," + margin9.top + ")");
+
+d3.csv("data/age_group.csv", function(d, i, columns) {
+  for (var i = 1, n = columns.length; i < n; ++i) d[columns[i]] = +d[columns[i]];
+  return d;
+}, function(error, data) {
+  if (error) throw error;
+
+  var keys9 = data.columns.slice(1);
+
+  x09.domain(data.map(function(d) { return d.group; }));
+ 
+
+  x19.domain(keys9).rangeRound([0, x09.bandwidth()]);
+  y9.domain([0, d3.max(data, function(d) { return d3.max(keys9, function(key) { return d[key]; }); })]).nice();
+
+  // console.log(function(d) { return x19(d.key); });
+  
+ g9.append("g")
+    .selectAll("g")
+    .data(data)
+    .enter().append("g")
+    .attr("class","bar")
+    .attr("transform", function(d) { return "translate(" + x09(d.group) + ",0)"; })
+    .selectAll("rect")
+    .data(function(d) { return keys9.map(function(key) { return {key: key, value: d[key]}; }); })
+    .enter().append("rect")
+      .attr("x", function(d) { return x19(d.key); })
+      .attr("y", function(d) { return y9(d.value); })
+      .attr("width", x19.bandwidth())
+      .attr("height", function(d) { return height9 - y9(d.value); })
+      .attr("fill", function(d) { return z9(d.key); });
+
+  g9.append("g")
+      .attr("class", "axis")
+      .attr("transform", "translate(0," + height9 + ")")
+      .call(d3.axisBottom(x09));
+
+  g9.append("g")
+      .attr("class", "y axis")
+      .call(d3.axisLeft(y9).ticks(null, "s"))
+    .append("text")
+      .attr("x", 2)
+      .attr("y", y9(y9.ticks().pop()) + 0.5)
+      .attr("dy", "0.32em")
+      .attr("fill", "#000")
+      .attr("font-weight", "bold")
+      .attr("text-anchor", "start")
+      .text("Population by neighbourhood  units:%");
+
+  var legend9 = g9.append("g")
+      .attr("font-family", "sans-serif")
+      .attr("font-size", 10)
+      .attr("text-anchor", "end")
+    .selectAll("g")
+    .data(keys9.slice().reverse())
+    .enter().append("g")
+      .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
+
+  legend9.append("rect")
+      .attr("x", width9 - 19)
+      .attr("width", 15)
+      .attr("height", 15)
+      .attr("fill", z9)
+      .attr("stroke", z9)
+      .attr("stroke-width",2)
+      .on("click",function(d) { update9(d) });
+
+  legend9.append("text")
+      .attr("x", width9 - 24)
+      .attr("y", 9.5)
+      .attr("dy", "0.32em")
+      .text(function(d) { return d; });
+
+
+  d3.selectAll('.checkbox').on('change', function() {
+  var cb9 = d3.select(this);
+  var ids9 = cb9.property("value");
+  update9(ids9);
+});
+  
+  var filtered9 = [];
+  
+  ////
+  //// Update and transition on click:
+  ////
+  
+  function update9(d) {  
+   
+    //
+    // Update the array to filter the chart by:
+    //
+   
+    // add the clicked key if not included:
+    if (filtered9.indexOf(d) == -1) {
+     filtered9.push(d); 
+      // if all bars are un-checked, reset:
+      if(filtered9.length == keys9.length) filtered9 = [];
+    }
+    // otherwise remove it:
+    else {
+      filtered9.splice(filtered9.indexOf(d), 1);
+    }
+    
+    //
+    // Update the scales for each group(/states)'s items:
+    //
+    var newKeys9 = [];
+    keys9.forEach(function(d) {
+      if (filtered9.indexOf(d) == -1 ) {
+        newKeys9.push(d);
+      }
+    })
+    x19.domain(newKeys9).rangeRound([0, x09.bandwidth()]);
+    y9.domain([0, d3.max(data, function(d) { return d3.max(keys9, function(key) { if (filtered9.indexOf(key) == -1) return d[key]; }); })]).nice();
+    
+    // update the y axis:
+            svg9.select(".y")
+            .transition()
+            .call(d3.axisLeft(y9).ticks(null, "s"))
+            .duration(500);
+    
+    
+    //
+    // Filter out the bands that need to be hidden:
+    //
+    var bars9 = svg9.selectAll(".bar").selectAll("rect")
+      .data(function(d) { return keys9.map(function(key) { return {key: key, value: d[key]}; }); })
+    
+   bars9.filter(function(d) {
+         return filtered9.indexOf(d.key) > -1;
+      })
+      .transition()
+      .attr("x", function(d) {
+        return (+d3.select(this).attr("x")) + (+d3.select(this).attr("width"))/2;  
+      })
+      .attr("height",0)
+      .attr("width",0)     
+      .attr("y", function(d) { return height9; })
+      .duration(500);
+      
+    //
+    // Adjust the remaining bars:
+    //
+    bars9.filter(function(d) {
+        return filtered9.indexOf(d.key) == -1;
+      })
+      .transition()
+      .attr("x", function(d) { return x19(d.key); })
+      .attr("y", function(d) { return y9(d.value); })
+      .attr("height", function(d) { return height9 - y9(d.value); })
+      .attr("width", x19.bandwidth())
+      .attr("fill", function(d) { return z9(d.key); })
+      .duration(500);
+    
+  
+    // update legend:
+    legend9.selectAll("rect")
+      .transition()
+      .attr("fill",function(d) {
+        if (filtered9.length) {
+          if (filtered9.indexOf(d) == -1) {
+            return z9(d); 
+          }
+           else {
+            return "white"; 
+          }
+        }
+        else {
+         return z9(d); 
+        }
+      })
+      .duration(100);
+    
+     
+  }
+
+  
+});
+}
+
+</script>
+
+
+
+
+      </div>
+
+      <div class="col-sm-6"  id = "box5">
+<script>
+
+
+
+var svg3 = d3.select("#box5").append("svg").attr("width", 560).attr("height", 400);
+var margin3 = {top: 20, right: 20, bottom: 30, left: 60};
+var width3 = +svg3.attr("width") - margin3.left - margin3.right;
+var height3 =+svg3.attr("height") - margin3.top - margin3.bottom;
+var x03 = d3.scaleBand().rangeRound([0, width3]).paddingInner(0.1);
+  
+// The scale for spacing each group's bar:
+var x13 = d3.scaleBand().padding(0.05);
+
+var y3 = d3.scaleLinear().rangeRound([height3, 0]);
+
+var z3 = d3.scaleOrdinal().range(d3.schemeTableau10);
+chart3();
+
+function chart3() {
+
+   g3 = svg3.append("g").attr('id','g3').attr("transform", "translate(" + margin3.left + "," + margin3.top + ")");
+
+d3.csv("data/ethnic_groups.csv", function(d, i, columns) {
+  for (var i = 1, n = columns.length; i < n; ++i) d[columns[i]] = +d[columns[i]];
+  return d;
+}, function(error, data) {
+  if (error) throw error;
+
+  var keys3 = data.columns.slice(1);
+
+  x03.domain(data.map(function(d) { return d.group; }));
+ 
+
+  x13.domain(keys3).rangeRound([0, x03.bandwidth()]);
+  y3.domain([0, d3.max(data, function(d) { return d3.max(keys3, function(key) { return d[key]; }); })]).nice();
+
+  // console.log(function(d) { return x13(d.key); });
+  
+ g3.append("g")
+    .selectAll("g")
+    .data(data)
+    .enter().append("g")
+    .attr("class","bar")
+    .attr("transform", function(d) { return "translate(" + x03(d.group) + ",0)"; })
+    .selectAll("rect")
+    .data(function(d) { return keys3.map(function(key) { return {key: key, value: d[key]}; }); })
+    .enter().append("rect")
+      .attr("x", function(d) { return x13(d.key); })
+      .attr("y", function(d) { return y3(d.value); })
+      .attr("width", x13.bandwidth())
+      .attr("height", function(d) { return height3 - y3(d.value); })
+      .attr("fill", function(d) { return z3(d.key); });
+
+  g3.append("g")
+      .attr("class", "axis")
+      .attr("transform", "translate(0," + height3 + ")")
+      .call(d3.axisBottom(x03));
+
+  g3.append("g")
+      .attr("class", "y axis")
+      .call(d3.axisLeft(y3).ticks(null, "s"))
+    .append("text")
+      .attr("x", 2)
+      .attr("y", y3(y3.ticks().pop()) + 0.5)
+      .attr("dy", "0.32em")
+      .attr("fill", "#000")
+      .attr("font-weight", "bold")
+      .attr("text-anchor", "start")
+      .text("Ethnic Groups by neighbourhood  units:%");
+
+  var legend3 = g3.append("g")
+      .attr("font-family", "sans-serif")
+      .attr("font-size", 10)
+      .attr("text-anchor", "end")
+    .selectAll("g")
+    .data(keys3.slice().reverse())
+    .enter().append("g")
+      .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
+
+  legend3.append("rect")
+      .attr("x", width3 - 13)
+      .attr("width", 15)
+      .attr("height", 15)
+      .attr("fill", z3)
+      .attr("stroke", z3)
+      .attr("stroke-width",2)
+      .on("click",function(d) { update3(d) });
+
+  legend3.append("text")
+      .attr("x", width3 - 24)
+      .attr("y", 3.5)
+      .attr("dy", "0.32em")
+      .text(function(d) { return d; });
+
+
+  d3.selectAll('.checkbox').on('change', function() {
+  var cb3 = d3.select(this);
+  var ids3 = cb3.property("value");
+  update3(ids3);
+});
+  
+  var filtered3 = [];
+  
+  ////
+  //// Update and transition on click:
+  ////
+  
+  function update3(d) {  
+   
+    //
+    // Update the array to filter the chart by:
+    //
+   
+    // add the clicked key if not included:
+    if (filtered3.indexOf(d) == -1) {
+     filtered3.push(d); 
+      // if all bars are un-checked, reset:
+      if(filtered3.length == keys3.length) filtered3 = [];
+    }
+    // otherwise remove it:
+    else {
+      filtered3.splice(filtered3.indexOf(d), 1);
+    }
+    
+    //
+    // Update the scales for each group(/states)'s items:
+    //
+    var newKeys3 = [];
+    keys3.forEach(function(d) {
+      if (filtered3.indexOf(d) == -1 ) {
+        newKeys3.push(d);
+      }
+    })
+    x13.domain(newKeys3).rangeRound([0, x03.bandwidth()]);
+    y3.domain([0, d3.max(data, function(d) { return d3.max(keys3, function(key) { if (filtered3.indexOf(key) == -1) return d[key]; }); })]).nice();
+    
+    // update the y axis:
+            svg3.select(".y")
+            .transition()
+            .call(d3.axisLeft(y3).ticks(null, "s"))
+            .duration(500);
+    
+    
+    //
+    // Filter out the bands that need to be hidden:
+    //
+    var bars3 = svg3.selectAll(".bar").selectAll("rect")
+      .data(function(d) { return keys3.map(function(key) { return {key: key, value: d[key]}; }); })
+    
+   bars3.filter(function(d) {
+         return filtered3.indexOf(d.key) > -1;
+      })
+      .transition()
+      .attr("x", function(d) {
+        return (+d3.select(this).attr("x")) + (+d3.select(this).attr("width"))/2;  
+      })
+      .attr("height",0)
+      .attr("width",0)     
+      .attr("y", function(d) { return height3; })
+      .duration(500);
+      
+    //
+    // Adjust the remaining bars:
+    //
+    bars3.filter(function(d) {
+        return filtered3.indexOf(d.key) == -1;
+      })
+      .transition()
+      .attr("x", function(d) { return x13(d.key); })
+      .attr("y", function(d) { return y3(d.value); })
+      .attr("height", function(d) { return height3 - y3(d.value); })
+      .attr("width", x13.bandwidth())
+      .attr("fill", function(d) { return z3(d.key); })
+      .duration(500);
+    
+  
+    // update legend:
+    legend3.selectAll("rect")
+      .transition()
+      .attr("fill",function(d) {
+        if (filtered3.length) {
+          if (filtered3.indexOf(d) == -1) {
+            return z3(d); 
+          }
+           else {
+            return "white"; 
+          }
+        }
+        else {
+         return z3(d); 
+        }
+      })
+      .duration(100);
+    
+     
+  }
+  
+});
+}
+
+</script>
+
+
+
+
+      </div>
+
+
+
+    </div>
+    <br>
+
+
+
+
+
+
+
+</body>
+
+
+
